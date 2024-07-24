@@ -7,7 +7,7 @@ const buildGlasses = (loader) => {
 
   // add frame glb.
   loader.load("/assets/Models/rayban_v2_Edited3.glb", (glassesObj) => {
-    glassesObj.scene.scale.set(1.1, 1.1, 1.1)
+    // glassesObj.scene.scale.set(1.1, 1.1, 1.1)
     glasses.add(glassesObj.scene)
   })
 
@@ -34,10 +34,25 @@ const buildHead = (modelGeometry) => {
   // Glasses are attached to the nose at a slight offset.
   const loader = new GLTFLoader()
   const glasses = buildGlasses(loader)
-  glasses.position.set(0, 0.1, 0)
+  glasses.position.set(0, 0.05, 0)
   const noseAttachment = new THREE.Object3D()
   noseAttachment.add(glasses)
   head.add(noseAttachment)
+
+  // Add occluder.
+  loader.load('/assets/Models/head-occluder.glb', (occluder) => {
+    // occluder.scene.scale.set(1.0, 1.1, 1.0)
+    occluder.scene.position.set(0.0, 0, 0.0)
+    occluder.scene.traverse((node) => {
+      if (node.isMesh) {
+        const mat = new THREE.MeshStandardMaterial()
+        mat.colorWrite = false
+        node.renderOrder = -1
+        node.material = mat
+      }
+    })
+    head.add(occluder.scene)
+  })
 
   // Update geometry on each frame with new info from the face controller.
   const show = (event) => {
