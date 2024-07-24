@@ -16,45 +16,18 @@ const buildGlasses = (loader) => {
 
 // Builds a scene object with a mesh, an occluder, and sun glasses, and manages state updates to
 // each component.
-const buildHead = (modelGeometry) => {
+const buildHead = () => {
   // head is anchored to the face.
   const head = new THREE.Object3D()
   head.visible = false
 
-  // headMesh draws content on the face.
-  const headMesh = XRExtras.ThreeExtras.faceMesh(
-    modelGeometry,
-    XRExtras.ThreeExtras.basicMaterial({
-      opacity: 1,
-      alpha: '/assets/Alpha/soft-eyes-mouth.png',
-    })
-  )
-  head.add(headMesh.mesh)
-
   // Glasses are attached to the nose at a slight offset.
   const loader = new GLTFLoader()
   const glasses = buildGlasses(loader)
-  glasses.position.copy(new THREE.Vector3(0, 0.05, 0))
+  // glasses.position.copy(new THREE.Vector3(0, 0.05, 0))
   const noseAttachment = new THREE.Object3D()
   noseAttachment.add(glasses)
   head.add(noseAttachment)
-
-  // Add occluder.
-  loader.load('/assets/Models/head-occluder.glb', (occluder) => {
-    occluder.scene.scale.set(1.0, 1.1, 1.0)
-    occluder.scene.position.set(0.0, 0, 0.0)
-    occluder.scene.traverse((node) => {
-      if (node.isMesh) {
-        const mat = new THREE.MeshStandardMaterial({
-          color: 0xff0000
-        })
-        // mat.colorWrite = false
-        // node.renderOrder = -1
-        node.material = mat
-      }
-    })
-    head.add(occluder.scene)
-  })
 
   // Update geometry on each frame with new info from the face controller.
   const show = (event) => {
@@ -69,14 +42,12 @@ const buildHead = (modelGeometry) => {
     noseAttachment.position.copy(attachmentPoints.noseBridge.position)
 
     // Update the face mesh.
-    headMesh.show(event)
     head.visible = true
   }
 
   // Hide all objects.
   const hide = () => {
     head.visible = false
-    headMesh.hide()
   }
 
   return {
@@ -94,7 +65,7 @@ const faceScenePipelineModule = () => {
   let modelGeometry_
 
   // Stores the head mesh instances by faceId.
-  const faceIdToHead_ = {}
+  let faceIdToHead_
 
   // init is called by onAttach and by facecontroller.faceloading. It needs to be called by both
   // before we can start.
@@ -127,12 +98,8 @@ const faceScenePipelineModule = () => {
     scene.add(bounceLight)
 
     // We generate the three head meshes ahead of time, but by default they are not visible.
-    faceIdToHead_[1] = buildHead(modelGeometry_)
-    faceIdToHead_[2] = buildHead(modelGeometry_)
-    faceIdToHead_[3] = buildHead(modelGeometry_)
-    scene.add(faceIdToHead_[1].object3d)
-    scene.add(faceIdToHead_[2].object3d)
-    scene.add(faceIdToHead_[3].object3d)
+    faceIdToHead_ = buildHead()
+    scene.add(faceIdToHead_.object3d)
 
     // prevent scroll/pinch gestures on canvas.
     canvas_.addEventListener('touchmove', (event) => event.preventDefault())
@@ -144,8 +111,8 @@ const faceScenePipelineModule = () => {
   }
 
   // Update the corresponding face mesh based on the faceId.
-  const show = (event) => faceIdToHead_[event.detail.id].show(event)
-  const hide = (event) => faceIdToHead_[event.detail.id].hide()
+  const show = (event) => faceIdToHead_.show(event)
+  const hide = (event) => faceIdToHead_.hide()
 
   return {
     name: 'facescene',
