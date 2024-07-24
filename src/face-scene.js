@@ -1,12 +1,12 @@
-import * as THREE from "three";
-import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import * as THREE from "three"
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js"
 
 // Builds the 3d glasses object from a GLB and lens materials.
 const buildGlasses = (loader) => {
   const glasses = new THREE.Object3D()
 
   // add frame glb.
-  loader.load('/assets/Models/rayban_v2_Edited3.glb', (glassesObj) => {
+  loader.load("/assets/Models/rayban_v2_Edited3.glb", (glassesObj) => {
     glassesObj.scene.scale.set(1.1, 1.1, 1.1)
     glasses.add(glassesObj.scene)
   })
@@ -16,22 +16,32 @@ const buildGlasses = (loader) => {
 
 // Builds a scene object with a mesh, an occluder, and sun glasses, and manages state updates to
 // each component.
-const buildHead = () => {
+const buildHead = (modelGeometry) => {
   // head is anchored to the face.
   const head = new THREE.Object3D()
   head.visible = false
 
+  // headMesh draws content on the face.
+  const headMesh = XRExtras.ThreeExtras.faceMesh(
+    modelGeometry,
+    XRExtras.ThreeExtras.basicMaterial({
+      opacity: 0,
+      alpha: "/assets/Alpha/soft-eyes-mouth.png",
+    })
+  )
+  head.add(headMesh.mesh)
+
   // Glasses are attached to the nose at a slight offset.
   const loader = new GLTFLoader()
   const glasses = buildGlasses(loader)
-  // glasses.position.copy(new THREE.Vector3(0, 0.05, 0))
+  glasses.position.set(0, 0.1, 0)
   const noseAttachment = new THREE.Object3D()
   noseAttachment.add(glasses)
   head.add(noseAttachment)
 
   // Update geometry on each frame with new info from the face controller.
   const show = (event) => {
-    const {transform, attachmentPoints} = event.detail
+    const { transform, attachmentPoints } = event.detail
 
     // Update the overall head position.
     head.position.copy(transform.position)
@@ -42,12 +52,14 @@ const buildHead = () => {
     noseAttachment.position.copy(attachmentPoints.noseBridge.position)
 
     // Update the face mesh.
+    headMesh.show(event)
     head.visible = true
   }
 
   // Hide all objects.
   const hide = () => {
     head.visible = false
+    headMesh.hide()
   }
 
   return {
@@ -69,7 +81,7 @@ const faceScenePipelineModule = () => {
 
   // init is called by onAttach and by facecontroller.faceloading. It needs to be called by both
   // before we can start.
-  const init = ({canvas, detail}) => {
+  const init = ({ canvas, detail }) => {
     canvas_ = canvas_ || canvas
     modelGeometry_ = modelGeometry_ || detail
 
@@ -78,7 +90,7 @@ const faceScenePipelineModule = () => {
     }
 
     // Get the 3js scene from XR
-    const {scene} = XR8.Threejs.xrScene()
+    const { scene } = XR8.Threejs.xrScene()
 
     // sets render sort order to the order of objects added to scene (for alpha rendering).
     THREE.WebGLRenderer.sortObjects = false
@@ -98,11 +110,11 @@ const faceScenePipelineModule = () => {
     scene.add(bounceLight)
 
     // We generate the three head meshes ahead of time, but by default they are not visible.
-    faceIdToHead_ = buildHead()
+    faceIdToHead_ = buildHead(modelGeometry_)
     scene.add(faceIdToHead_.object3d)
 
     // prevent scroll/pinch gestures on canvas.
-    canvas_.addEventListener('touchmove', (event) => event.preventDefault())
+    canvas_.addEventListener("touchmove", (event) => event.preventDefault())
   }
 
   const onDetach = () => {
@@ -115,16 +127,16 @@ const faceScenePipelineModule = () => {
   const hide = (event) => faceIdToHead_.hide()
 
   return {
-    name: 'facescene',
+    name: "facescene",
     onAttach: init,
     onDetach,
     listeners: [
-      {event: 'facecontroller.faceloading', process: init},
-      {event: 'facecontroller.facefound', process: show},
-      {event: 'facecontroller.faceupdated', process: show},
-      {event: 'facecontroller.facelost', process: hide},
+      { event: "facecontroller.faceloading", process: init },
+      { event: "facecontroller.facefound", process: show },
+      { event: "facecontroller.faceupdated", process: show },
+      { event: "facecontroller.facelost", process: hide },
     ],
   }
 }
 
-export {faceScenePipelineModule}
+export { faceScenePipelineModule }
