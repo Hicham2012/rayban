@@ -8,6 +8,7 @@ const buildGlasses = (loader) => {
   // add frame glb.
   loader.load("/assets/Models/rayban_v2_Edited3.glb", (glassesObj) => {
     // glassesObj.scene.scale.set(1.1, 1.1, 1.1)
+    glassesObj.scene.position.set(0, 0, 0.05)
     glasses.add(glassesObj.scene)
   })
 
@@ -16,33 +17,22 @@ const buildGlasses = (loader) => {
 
 // Builds a scene object with a mesh, an occluder, and sun glasses, and manages state updates to
 // each component.
-const buildHead = (modelGeometry) => {
+const buildHead = () => {
   // head is anchored to the face.
   const head = new THREE.Object3D()
   head.visible = false
 
-  // headMesh draws content on the face.
-  const headMesh = XRExtras.ThreeExtras.faceMesh(
-    modelGeometry,
-    XRExtras.ThreeExtras.basicMaterial({
-      opacity: 0,
-      alpha: "/assets/Alpha/soft-eyes-mouth.png",
-    })
-  )
-  head.add(headMesh.mesh)
-
   // Glasses are attached to the nose at a slight offset.
   const loader = new GLTFLoader()
   const glasses = buildGlasses(loader)
-  glasses.position.set(0, 0, 0.05)
   const noseAttachment = new THREE.Object3D()
   noseAttachment.add(glasses)
   head.add(noseAttachment)
 
   // Add occluder.
   loader.load('/assets/Models/head-occluder.glb', (occluder) => {
-    // occluder.scene.scale.set(1.0, 1.1, 1.0)
-    occluder.scene.position.set(0.0, 0, 0.0)
+    occluder.scene.scale.set(0.95, 1.0, 0.95)
+    occluder.scene.position.set(0, 0, 0)
     occluder.scene.traverse((node) => {
       if (node.isMesh) {
         const mat = new THREE.MeshStandardMaterial()
@@ -66,15 +56,12 @@ const buildHead = (modelGeometry) => {
     // Update the nose position.
     noseAttachment.position.copy(attachmentPoints.noseBridge.position)
 
-    // Update the face mesh.
-    headMesh.show(event)
     head.visible = true
   }
 
   // Hide all objects.
   const hide = () => {
     head.visible = false
-    headMesh.hide()
   }
 
   return {
@@ -125,7 +112,7 @@ const faceScenePipelineModule = () => {
     scene.add(bounceLight)
 
     // We generate the three head meshes ahead of time, but by default they are not visible.
-    faceIdToHead_ = buildHead(modelGeometry_)
+    faceIdToHead_ = buildHead()
     scene.add(faceIdToHead_.object3d)
 
     // prevent scroll/pinch gestures on canvas.
