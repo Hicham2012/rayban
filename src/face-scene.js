@@ -6,7 +6,7 @@ const buildGlasses = (loader) => {
   const glasses = new THREE.Object3D()
 
   // add frame glb.
-  loader.load("/assets/Models/rayban_v2_Edited3.glb", (glassesObj) => {
+  loader.load("/assets/Models/rayban_v2_1.glb", (glassesObj) => {
     // glassesObj.scene.scale.set(1.1, 1.1, 1.1)
     glasses.add(glassesObj.scene)
   })
