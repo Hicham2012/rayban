@@ -1,6 +1,5 @@
 import * as THREE from "three";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
-import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 
 // Builds the 3d glasses object from a GLB and lens materials.
 const buildGlasses = (loader) => {
@@ -26,7 +25,7 @@ const buildHead = (modelGeometry) => {
   const headMesh = XRExtras.ThreeExtras.faceMesh(
     modelGeometry,
     XRExtras.ThreeExtras.basicMaterial({
-      opacity: 0,
+      opacity: 1,
       alpha: '/assets/Alpha/soft-eyes-mouth.png',
     })
   )
@@ -46,9 +45,11 @@ const buildHead = (modelGeometry) => {
     occluder.scene.position.set(0.0, 0, 0.0)
     occluder.scene.traverse((node) => {
       if (node.isMesh) {
-        const mat = new THREE.MeshStandardMaterial()
-        mat.colorWrite = false
-        node.renderOrder = -1
+        const mat = new THREE.MeshStandardMaterial({
+          color: 0xff0000
+        })
+        // mat.colorWrite = false
+        // node.renderOrder = -1
         node.material = mat
       }
     })
