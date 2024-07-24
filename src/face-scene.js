@@ -8,7 +8,6 @@ const buildGlasses = (loader) => {
   // add frame glb.
   loader.load("/assets/Models/rayban_v2_Edited3.glb", (glassesObj) => {
     // glassesObj.scene.scale.set(1.1, 1.1, 1.1)
-    glassesObj.scene.position.set(0, 0, 0.05)
     glasses.add(glassesObj.scene)
   })
 
